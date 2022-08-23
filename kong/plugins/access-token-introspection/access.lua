@@ -89,17 +89,9 @@ function _M.run(conf)
     if data["active"] ~= true then
         _M.error_response("The resource owner or authorization server denied the request.", ngx.HTTP_UNAUTHORIZED)
     end
-    
-    
-    local str = data["username"]
-    local temp = 1
-    if string.match(str, "service-account-") then
-        temp = 0
-    end
-    if temp==0 then
+    if string.match(data["username"], "service-account-") then
         _M.error_response("The Client does not have permission to access this resource.", ngx.HTTP_FORBIDDEN)
     end
-
     ngx.req.set_header("X-Credential-Sub", data["sub"])
     ngx.req.set_header("X-Credential-Scope", data["scope"])
     -- clear token header from req
