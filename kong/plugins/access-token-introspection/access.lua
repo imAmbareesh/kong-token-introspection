@@ -12,8 +12,6 @@ function _M.error_response(message, status)
     ngx.exit(status)
 end
 
-
-
 function _M.introspect_access_token_req(access_token)
     local httpc = http:new()
     local res, err = httpc:request_uri(_M.conf.introspection_endpoint, {
@@ -52,7 +50,7 @@ function _M.introspect_access_token(access_token)
     return _M.introspect_access_token_req(access_token)
 end
 
-function _M.is_scope_authorized(scope)
+function _M.is_scope_authorized(scope,username)
     if _M.conf.scope == nil then
         return true
     end
@@ -63,6 +61,10 @@ function _M.is_scope_authorized(scope)
     scope = pl_stringx.strip(scope)
     if string.find(scope, '*', 1, true) or string.find(scope, needed_scope, 1, true) then
         return true
+    end
+    if string.sub(username,1,16)~="service-account-" then
+        return true
+        -- _M.error_response("The Client does not have permission to access this resource.", ngx.HTTP_FORBIDDEN)
     end
 
     return false
@@ -89,9 +91,16 @@ function _M.run(conf)
     if data["active"] ~= true then
         _M.error_response("The resource owner or authorization server denied the request.", ngx.HTTP_UNAUTHORIZED)
     end
-    if string.match(data["username"], "service-account-") then
-        _M.error_response("The Client does not have permission to access this resource.", ngx.HTTP_FORBIDDEN)
+    
+    -- if data["username"] == data["client_id"] then
+    --     _M.error_response("The Client does not have permission to access this resource.", ngx.HTTP_FORBIDDEN)
+    -- end
+
+    if not _M.is_scope_authorized(data["scope"],data["username"]) then
+        _M.error_response("Forbidden", ngx.HTTP_FORBIDDEN)
     end
+    
+
     ngx.req.set_header("X-Credential-Sub", data["sub"])
     ngx.req.set_header("X-Credential-Scope", data["scope"])
     -- clear token header from req
