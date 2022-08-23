@@ -90,12 +90,14 @@ function _M.run(conf)
         _M.error_response("The resource owner or authorization server denied the request.", ngx.HTTP_UNAUTHORIZED)
     end
     
-    if data["username"] == data["client_id"] then
-        _M.error_response("The Client does not have permission to access this resource.", ngx.HTTP_FORBIDDEN)
-    end
     
-    if not _M.is_scope_authorized(data["scope"]) then
-        _M.error_response("Forbidden", ngx.HTTP_FORBIDDEN)
+    local str = data["username"]
+    local temp = 1
+    if string.match(str, "service-account-") then
+        temp = 0
+    end
+    if temp==0 then
+        _M.error_response("The Client does not have permission to access this resource.", ngx.HTTP_FORBIDDEN)
     end
 
     ngx.req.set_header("X-Credential-Sub", data["sub"])
