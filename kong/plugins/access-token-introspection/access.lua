@@ -62,7 +62,7 @@ function _M.is_scope_authorized(scope,username)
     if string.find(scope, '*', 1, true) or string.find(scope, needed_scope, 1, true) then
         return true
     end
-    if string.sub(username,1,16)~="service%-account%-" then
+    if string.sub(username,1,7)~="service" then
         return true
         -- _M.error_response("The Client does not have permission to access this resource.", ngx.HTTP_FORBIDDEN)
     end
